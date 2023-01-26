@@ -29,18 +29,5 @@ describe("Attacker", () => {
       let bal = await attacker.getBalance();
       assert.equal(bal.toString(), ethers.utils.parseEther("11").toString());
     });
-    // it("Open new account and owner approve, cannot request new account if already open, cannot approve non existing account", async () => {
-    //   assert.equal(await bank.getAccountStatus(), 2);
-
-    //   await expect(
-    //     bank.openAccount(),
-    //     "openAccount(): You already opened a account"
-    //   );
-
-    //   await expect(
-    //     bank.approveAccount(accounts[2].address),
-    //     "approveAccount(): Account request does not exists"
-    //   );
-    // });
   });
 });
