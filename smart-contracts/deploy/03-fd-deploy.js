@@ -1,13 +1,13 @@
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
-
-  await deploy("Bank", {
+  const bank = await ethers.getContract("Bank");
+  await deploy("FixedDeposit", {
     from: deployer,
-    args: [],
+    args: [bank.address],
     log: true,
     waitConfirmations: 1,
   });
 };
 
-module.exports.tags = ["all", "bank"];
+module.exports.tags = ["all", "fd"];

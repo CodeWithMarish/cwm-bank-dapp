@@ -18,6 +18,7 @@ contract Bank {
     mapping(address => uint) balances;
 
     address owner;
+    address fdContract;
 
     /**
      * Modifiers
@@ -116,16 +117,29 @@ contract Bank {
         require(status, "transfer(): Transfer failed");
     }
 
-    function getAccountStatus() public view returns (Status) {
-        return accountStatus[msg.sender];
+    function setFDContract(address _fdAddress) external onlyOwner {
+        fdContract = _fdAddress;
     }
 
-    function accountBalance() public view returns (uint) {
+    function depositFDAmount(address account) external payable {
+        require(msg.sender == fdContract, "Only FD contract can call this");
+        balances[account] += msg.value;
+    }
+
+    function getAccountStatus(address account) public view returns (Status) {
+        return accountStatus[account];
+    }
+
+    function accountBalance(address account) public view returns (uint) {
         require(
-            accountStatus[msg.sender] == Status.ACTIVE,
+            accountStatus[account] == Status.ACTIVE,
             "accountBalance(): Account not active"
         );
-        return balances[msg.sender];
+        return balances[account];
+    }
+
+    function getFDContractAddress() public view returns (address) {
+        return fdContract;
     }
 
     function getOwner() public view returns (address) {

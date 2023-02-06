@@ -17,10 +17,10 @@ describe("Bank", () => {
     it("Check owner, account status will be not requested", async () => {
       let owner = await bank.getOwner();
       assert.equal(accounts[0].address, owner);
-      assert.equal(await bank.getAccountStatus(), 2);
+      assert.equal(await bank.getAccountStatus(accounts[0].address), 2);
     });
     it("Open new account and owner approve, cannot request new account if already open, cannot approve non existing account", async () => {
-      assert.equal(await bank.getAccountStatus(), 2);
+      assert.equal(await bank.getAccountStatus(accounts[0].address), 2);
 
       await expect(
         bank.openAccount(),
@@ -48,14 +48,14 @@ describe("Bank", () => {
       await tx.wait();
 
       assert(
-        (await bank.accountBalance()).toString() ==
+        (await bank.accountBalance(accounts[0].address)).toString() ==
           ethers.utils.parseEther("1").toString()
       );
 
       let tx1 = await bank.withdraw(ethers.utils.parseEther("0.5"));
       await tx1.wait();
       assert(
-        (await bank.accountBalance()).toString() ==
+        (await bank.accountBalance(accounts[0].address)).toString() ==
           ethers.utils.parseEther("0.5").toString()
       );
 
@@ -95,21 +95,21 @@ describe("Bank", () => {
       await tx2.wait();
 
       assert.equal(
-        (await bank1.accountBalance()).toString(),
+        (await bank1.accountBalance(accounts[0].address)).toString(),
         ethers.utils.parseEther("0.5").toString()
       );
     });
     it("Pause/unpause account, cannot pause if not active, cannot unpause if not paused, close account, cannot close if account not active", async () => {
       let tx = await bank.pauseAccount();
       await tx.wait();
-      assert.equal(await bank.getAccountStatus(), 3);
+      assert.equal(await bank.getAccountStatus(accounts[0].address), 3);
       await expect(bank.pauseAccount()).to.be.revertedWith(
         "Account not active"
       );
 
       let tx1 = await bank.unPauseAccount();
       await tx1.wait();
-      assert.equal(await bank.getAccountStatus(), 2);
+      assert.equal(await bank.getAccountStatus(accounts[0].address), 2);
       await expect(bank.unPauseAccount()).to.be.revertedWith(
         "Account not paused"
       );
@@ -124,7 +124,7 @@ describe("Bank", () => {
       let tx2 = await bank.closeAccount();
       await tx2.wait();
 
-      assert.equal(await bank.getAccountStatus(), 4);
+      assert.equal(await bank.getAccountStatus(accounts[0].address), 4);
       await expect(bank.closeAccount()).to.be.revertedWith(
         "Account not active"
       );
