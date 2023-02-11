@@ -14,6 +14,24 @@ contract Bank {
         CLOSED
     }
 
+    enum TransactionType {
+        DEPOSIT,
+        WITHDRAW,
+        DEPOSIT_FD
+    }
+
+    enum EmployeeStatus {
+        NOT_ACTIVE,
+        ACTIVE
+    }
+    enum EmployeeType {
+        MANAGER
+    }
+    struct Employee {
+        EmployeeStatus employeeStatus;
+        EmployeeType employeeType;
+    }
+    mapping(address => Employee) employees;
     mapping(address => Status) accountStatus;
     mapping(address => uint) balances;
 
@@ -41,6 +59,23 @@ contract Bank {
         require(
             accountStatus[msg.sender] == Status.PAUSED,
             "Account not paused"
+        );
+        _;
+    }
+
+    modifier notEmployee(address employeeAddress) {
+        require(
+            employees[employeeAddress].employeeStatus ==
+                EmployeeStatus.NOT_ACTIVE,
+            "Employee already exists"
+        );
+        _;
+    }
+
+    modifier employeeExists(address employeeAddress) {
+        require(
+            employees[employeeAddress].employeeStatus == EmployeeStatus.ACTIVE,
+            "Employee does not exists"
         );
         _;
     }
@@ -148,5 +183,28 @@ contract Bank {
 
     function bankBalance() public view returns (uint256) {
         return address(this).balance;
+    }
+
+    /**
+     * Adding staff and manager
+     */
+
+    function addEmployee(
+        address employeeAddress,
+        EmployeeType empType
+    ) external onlyOwner notEmployee(employeeAddress) {
+        employees[employeeAddress] = Employee(EmployeeStatus.ACTIVE, empType);
+    }
+
+    function removeEmployee(
+        address employeeAddress
+    ) external onlyOwner employeeExists(employeeAddress) {
+        delete employees[employeeAddress];
+    }
+
+    function employeeDetails(
+        address employeeAddress
+    ) public view returns (Employee memory) {
+        return employees[employeeAddress];
     }
 }

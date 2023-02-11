@@ -16,12 +16,17 @@ contract FixedDeposit {
         uint256 noOfYears;
         uint256 lockTime;
         uint256 claimAmount;
+        uint256 claimConfirmations;
         FDStatus status;
     }
+
+    mapping(address => mapping(address => bool)) claimConfirmations;
     mapping(address => FD) public fds;
 
     uint256 private interestRate = 5;
     uint256 private penaltyRate = 2;
+
+    uint256 private claimConfirmationsNeeded = 2;
 
     Bank bank;
 
@@ -66,9 +71,32 @@ contract FixedDeposit {
         _;
     }
     modifier canApproveClaim(address account) {
+        FD memory fd = fds[account];
         require(
-            fds[account].status == FDStatus.CLAIM_REQUESTED,
+            bank.employeeDetails(msg.sender).employeeStatus ==
+                Bank.EmployeeStatus.ACTIVE,
+            "You are not employee"
+        );
+        require(
+            fd.status == FDStatus.CLAIM_REQUESTED,
             "canApproveClaim: Claim request does not exists"
+        );
+        require(
+            claimConfirmations[account][msg.sender] == false,
+            "canApproveClaim: You have already approved"
+        );
+        require(
+            fd.claimConfirmations < 2,
+            "canApproveClaim: Already approved to withdraw"
+        );
+        _;
+    }
+
+    modifier isEmployee() {
+        require(
+            bank.employeeDetails(msg.sender).employeeStatus ==
+                Bank.EmployeeStatus.ACTIVE,
+            "Only Employee can approve"
         );
         _;
     }
@@ -85,6 +113,7 @@ contract FixedDeposit {
             amount,
             noOfYears,
             block.timestamp + (noOfYears * 31556926),
+            0,
             0,
             FDStatus.STARTED
         );
@@ -111,11 +140,14 @@ contract FixedDeposit {
         fds[msg.sender].status = FDStatus.CLAIM_REQUESTED;
     }
 
-    function approveClaim(
-        address account
-    ) public onlyOwner canApproveClaim(account) {
-        fds[account].status = FDStatus.CLAIM_APPROVED;
-        fds[account].claimAmount = checkReturns(account);
+    function approveClaim(address account) public canApproveClaim(account) {
+        fds[account].claimConfirmations += 1;
+        claimConfirmations[account][msg.sender] = true;
+        FD memory fd = fds[account];
+        if (fd.claimConfirmations == 2) {
+            fds[account].status = FDStatus.CLAIM_APPROVED;
+            fds[account].claimAmount = checkReturns(account);
+        }
     }
 
     function withdrawClaim() external {
